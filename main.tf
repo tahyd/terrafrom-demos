@@ -4,7 +4,18 @@ terraform {
       source = "hashicorp/aws"
       version = "6.21.0"
     }
+
+    tls = {
+      source  = "hashicorp/tls"
+      version = "4.0.0"
+    }
+
   }
+}
+
+resource "tls_private_key" "mykey" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
 
 provider "aws" {
@@ -30,7 +41,9 @@ resource "aws_instance" "example" {
 
 resource "aws_key_pair" "web_key" {
     key_name = "mykey"
-    public_key = file("C:/Users/HSBC/.ssh/id_ed25519.pub")
+    #public_key = file("C:/Users/HSBC/.ssh/id_ed25519.pub")
+    public_key = tls_private_key.mykey.public_key_openssh
+
 }
 
 resource "aws_security_group" "ssh-access" {
@@ -50,6 +63,11 @@ resource "aws_security_group" "ssh-access" {
     }
 }
 
+
+output "private_key" {
+  value     = tls_private_key.mykey.private_key_pem
+  sensitive = true
+}
 
 # create key in aws  and used= the key name here
 
